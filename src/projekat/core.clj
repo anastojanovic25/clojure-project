@@ -22,15 +22,16 @@
   (reduce (fn [acc e]
             (if (> (:temp e) (:temp acc)) e acc))
           destinations))
+
 (defn count-within-budget [destinations max-price]
   (count (filter #(<= (:price %) max-price) destinations)))
-
 
 
 (println "Average temperature:" (avg-temp destinations))
 (println "Destination in budget:" (filter-by-budget destinations 900))
 (println "Number of destinations within budget:" (count-within-budget destinations 900))
 (println "The hottest destination:" (hottest-destination destinations))
+
 
 (defn filter-by-climate [destinations preference]
   (filter
