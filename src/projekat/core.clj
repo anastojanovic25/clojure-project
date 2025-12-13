@@ -1,4 +1,6 @@
-(ns projekat.core)
+(ns projekat.core
+  (:require [projekat.entities :as ent]
+            [projekat.logic :as logic]))
 
 (def destinations
   [{:city "Athens" :temp 28 :price 450 :type "culture"}
@@ -66,7 +68,9 @@
 
 
 
-
+(def user1 (ent/make-user "Ana" 600 "warm" "culture"))
+(println "Recommended destination:"
+         (logic/recommend-destination user1 destinations))
 
 
 
