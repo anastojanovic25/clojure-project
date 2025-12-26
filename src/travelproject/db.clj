@@ -1,4 +1,4 @@
-(ns db
+(ns projekat.db
     (:require
       [next.jdbc :as jdbc]
       [next.jdbc.result-set :as rs]))
