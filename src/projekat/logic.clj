@@ -14,6 +14,6 @@
                 "cold" (filter #(< (:temp %) 15) filtered)
                 filtered)]
     (if (seq final)
-      (first (sort-by :price final)) ;
+      (first (sort-by :price final))
       nil)))
 

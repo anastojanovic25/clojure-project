@@ -1,6 +1,6 @@
 (ns projekat.core
   (:require [projekat.entities :as ent]
-            [projekat.logic :as logic]))
+            [projekabrt.logic :as logic]))
 
 (def destinations
   [{:city "Athens" :temp 28 :price 450 :type "culture"}
