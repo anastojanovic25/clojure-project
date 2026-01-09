@@ -2,19 +2,21 @@
   (:require
     [travelproject.entities :as ent]
     [travelproject.logic :as logic]
-    [travelproject.db :as db]))
+    [travelproject.db :as db]
+    [travelproject.api.weather :as weather]))
+
+(def destinations
+  [{:city "Athens" :temp 28 :price 450 :type "culture"}
+   {:city "Oslo" :temp 15 :price 700 :type "adventure"}
+   {:city "Rome" :temp 25 :price 500 :type "culture"}
+   {:city "Stockholm" :temp 10 :price 900 :type "relax"}
+   {:city "Bangkok" :temp 30 :price 700 :type "adventure"}
+   {:city "Prague" :temp 22 :price 480 :type "culture"}
+   {:city "Barcelona" :temp 27 :price 520 :type "relax"}
+   ])
 
 ;; (def destinations
-;; [{:city "Athens" :temp 28 :price 450 :type "culture"}
-;;{:city "Oslo" :temp 15 :price 700 :type "adventure"}
-;;{:city "Rome" :temp 25 :price 500 :type "culture"}
-;;{:city "Stockholm" :temp 10 :price 900 :type "relax"}
-;; {:city "Bangkok" :temp 30 :price 700 :type "adventure"}
-;; {:city "Prague" :temp 22 :price 480 :type "culture"}
-;;{:city "Barcelona" :temp 27 :price 520 :type "relax"}
-;; ] )
-(def destinations
-  (db/fetch-destinations))
+;;(db/fetch-destinations))
 
 
 (defn avg-temp [destinations]
