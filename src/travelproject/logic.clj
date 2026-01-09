@@ -1,5 +1,6 @@
-(ns projekat.logic
-  (:require [projekat.entities :as ent]))
+(ns travelproject.logic
+  (:require [travelproject.entities :as ent]))
+
 
 (defn recommend-destination [user destinations]
   (let [budget (:budget user)

@@ -10,6 +10,7 @@
 
    [com.github.seancorfield/next.jdbc "1.3.939"]
    [com.mysql/mysql-connector-j "8.0.33"]]
+  
 
   :profiles
   {:dev

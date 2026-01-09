@@ -1,16 +1,20 @@
-(ns projekat.core
-  (:require [projekat.entities :as ent]
-            [projekabrt.logic :as logic]))
+(ns travelproject.core
+  (:require
+    [travelproject.entities :as ent]
+    [travelproject.logic :as logic]
+    [travelproject.db :as db]))
 
+;; (def destinations
+;; [{:city "Athens" :temp 28 :price 450 :type "culture"}
+;;{:city "Oslo" :temp 15 :price 700 :type "adventure"}
+;;{:city "Rome" :temp 25 :price 500 :type "culture"}
+;;{:city "Stockholm" :temp 10 :price 900 :type "relax"}
+;; {:city "Bangkok" :temp 30 :price 700 :type "adventure"}
+;; {:city "Prague" :temp 22 :price 480 :type "culture"}
+;;{:city "Barcelona" :temp 27 :price 520 :type "relax"}
+;; ] )
 (def destinations
-  [{:city "Athens" :temp 28 :price 450 :type "culture"}
-   {:city "Oslo" :temp 15 :price 700 :type "adventure"}
-   {:city "Rome" :temp 25 :price 500 :type "culture"}
-   {:city "Stockholm" :temp 10 :price 900 :type "relax"}
-   {:city "Bangkok" :temp 30 :price 700 :type "adventure"}
-   {:city "Prague" :temp 22 :price 480 :type "culture"}
-   {:city "Barcelona" :temp 27 :price 520 :type "relax"}
-   ])
+  (db/fetch-destinations))
 
 
 (defn avg-temp [destinations]
@@ -60,7 +64,7 @@
 
 (defn avg-price-by-type [destinations trip-type]
   (let [filtered (filter #(= (:type %) trip-type) destinations)
-        prices   (map :price filtered)]
+        prices (map :price filtered)]
     (if (seq prices)
       (/ (reduce + prices) (count prices))
       0)))
@@ -71,6 +75,10 @@
 (def user1 (ent/make-user "Ana" 600 "warm" "culture"))
 (println "Recommended destination:"
          (logic/recommend-destination user1 destinations))
+
+(travelproject.db/get-all-cities)
+
+(travelproject.db/get-cities-by-country "Spain")
 
 
 

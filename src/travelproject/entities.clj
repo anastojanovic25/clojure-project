@@ -1,4 +1,4 @@
-(ns projekat.entities)
+(ns travelproject.entities)
 
 
 (defn make-user [name budget preferred-climate trip-type]
