@@ -3,7 +3,9 @@
     [travelproject.entities :as ent]
     [travelproject.logic :as logic]
     [travelproject.db :as db]
-    [travelproject.api.weather :as weather]))
+    [travelproject.api.weather :as weather]
+    [travelproject.api.geocoding :as geo]
+    [travelproject.api.distance :as dist]))
 
 (def destinations
   [{:city "Athens" :temp 28 :price 450 :type "culture"}
@@ -83,4 +85,13 @@
 (travelproject.db/get-cities-by-country "Spain")
 
 
+(defn city-distance [city-a city-b]
+  (let [from (geo/city-coords city-a)
+        to   (geo/city-coords city-b)]
+    (long (Math/round (dist/distance from to)))))
 
+(city-distance "Belgrade" "Rome")
+
+(city-distance "Belgrade" "Budapest")
+(geo/city-coords "Belgrade")
+(geo/city-coords "Budapest")
