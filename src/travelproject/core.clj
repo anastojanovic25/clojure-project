@@ -95,3 +95,7 @@
 (city-distance "Belgrade" "Budapest")
 (geo/city-coords "Belgrade")
 (geo/city-coords "Budapest")
+(defn choose-transport [car-cost flight-cost]
+  (if (< flight-cost car-cost)
+    {:type :flight :cost flight-cost}
+    {:type :car :cost car-cost}))
