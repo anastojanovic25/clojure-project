@@ -99,3 +99,18 @@
   (if (< flight-cost car-cost)
     {:type :flight :cost flight-cost}
     {:type :car :cost car-cost}))
+
+
+
+;;new
+
+(rb/recommend-by-budget
+  {:budget 800
+   :origin-iata "BEG"
+   :origin-city "Belgrade"
+   :transport :any
+   :check-in "2026-03-15"
+   :check-out "2026-03-20"
+   :nights 5}
+  rb/candidates)
+

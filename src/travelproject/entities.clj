@@ -1,6 +1,5 @@
 (ns travelproject.entities)
 
-
 (defn make-user [name budget preferred-climate trip-type]
   {:name name
    :budget budget
@@ -24,3 +23,5 @@
    :destination destination
    :activities activities
    :status status})
+
+;;new
