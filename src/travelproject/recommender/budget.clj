@@ -132,6 +132,11 @@
        (sort-by (juxt (comp - :typeScore) :totalE))
        (take 5)))
 
+(defn recommend-for-city
+  [req city]
+  (let [cand {:city city}]
+    (when-let [r (estimate-trip-cost req cand)]
+      [r])))
 
 (def candidates
   [{:city "Rome" :city-iata "FCO"}

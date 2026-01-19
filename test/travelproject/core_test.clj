@@ -1,10 +1,7 @@
-(ns core-test
+(ns travelproject.core-test
   (:require [midje.sweet :refer :all]
-            [travelproject.core :refer :all]))
+            [travelproject.core2 :as core]))
 
-; (facts "Test add"
-       ;      (add 1 2) => 3
-       ; (add -6 "3" ) => -3)
 
 (facts "Average temperature of destinations"
        (avg-temp destinations) => 157/7)

@@ -115,6 +115,9 @@
                         (throw (ex-info "Could not find IATA code for that city."
                                         {:origin-city origin-city})))
 
+        dest-city  (prompt "Destination city [leave empty for recommendations]:")
+        dest-city  (when (seq dest-city) dest-city)
+
         check-in    (non-empty! "Check-in" (prompt "Enter check-in date (YYYY-MM-DD):"))
         _           (valid-date! "Check-in" check-in)
 
@@ -133,15 +136,16 @@
              :transport transport
              :trip-type trip-type}
 
-        results (rb/recommend-by-budget req rb/candidates)]
+        results (if dest-city
+                  (rb/recommend-for-city req dest-city)
+                  (rb/recommend-by-budget req rb/candidates))]
 
-    (println (format "\nOrigin: %s (%s)" origin-city origin-iata))
     (println (str "Trip length: " nights " nights"))
     (print-results results)))
 
 
 (defn -main [& _args]
-  (println "=== Smart Travel Recommender (MVP) ===")
+  (println "=== Smart Travel Recommender ===")
   (loop []
     (let [ok?
           (try
