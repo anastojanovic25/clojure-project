@@ -1,116 +1,156 @@
 (ns travelproject.core
+  (:gen-class)
   (:require
-    [travelproject.entities :as ent]
-    [travelproject.logic :as logic]
-    [travelproject.db :as db]
-    [travelproject.api.weather :as weather]
-    [travelproject.api.geocoding :as geo]
-    [travelproject.api.distance :as dist]))
+    [clojure.string :as str]
+    [travelproject.recommender.budget :as rb]
+    [travelproject.api.location :as loc]))
 
-(def destinations
-  [{:city "Athens" :temp 28 :price 450 :type "culture"}
-   {:city "Oslo" :temp 15 :price 700 :type "adventure"}
-   {:city "Rome" :temp 25 :price 500 :type "culture"}
-   {:city "Stockholm" :temp 10 :price 900 :type "relax"}
-   {:city "Bangkok" :temp 30 :price 700 :type "adventure"}
-   {:city "Prague" :temp 22 :price 480 :type "culture"}
-   {:city "Barcelona" :temp 27 :price 520 :type "relax"}
-   ])
+(defn prompt [label]
+  (print (str label " "))
+  (flush)
+  (str/trim (read-line)))
 
-;; (def destinations
-;;(db/fetch-destinations))
+(defn parse-int [s]
+  (Integer/parseInt (str/trim s)))
 
+(defn parse-transport [s]
+  (case (str/lower-case (str/trim s))
+    "plane" :plane
+    "car"   :car
+    "any"   :any
+    :any))
 
-(defn avg-temp [destinations]
-  (/ (reduce + (map :temp destinations))
-     (count destinations)))
+(defn parse-trip-type [s]
+  (case (clojure.string/lower-case (clojure.string/trim (or s "")))
+    "culture"  :culture
+    "adventure" :adventure
+    "relax"    :relax
+    nil))
 
-(defn filter-by-budget [destinations max-price]
-  (filter #(<= (:price %) max-price) destinations))
+(defn print-results [results]
+  (println "\nTop recommendations:")
+  (if (empty? results)
+    (println "No destinations fit your budget for the selected dates.")
+    (doseq [[idx r] (map-indexed vector results)]
+      (let [score  (double (or (:typescore r) 0.0))
+            reason (when (= (:requested-transport r) :any)
+                     (some-> (:reason r) name))
+            h      (:hotel r)
+            f      (:flight r)]
+        (println
+          (format "%d) %s | total: %.2fE | transport: %s (%.2fE) | hotel: %.2fE | type: %s | score: %.2f%s"
+                  (inc idx)
+                  (:city r)
+                  (double (:totalE r))
+                  (name (:transport r))
+                  (double (:transportE r))
+                  (double (:hotelE r))
+                  (or (:tripType r)(:trip-type r) "-")
+                  score
+                  (if reason (str " | reason: " reason) "")))
 
-(defn hottest-destination [destinations]
-  (reduce (fn [acc e]
-            (if (> (:temp e) (:temp acc)) e acc))
-          destinations))
+        (when h
+          (println
+            (format "   Hotel: %s | rating: %s | %.2fE/night | total: %.2fE"
+                    (:name h)
+                    (or (:rating h) "n/a")
+                    (double (or (:price-per-night h) 0.0))
+                    (double (or (:total-price h) 0.0)))))
 
-(defn count-within-budget [destinations max-price]
-  (count (filter #(<= (:price %) max-price) destinations)))
-
-
-(println "Average temperature:" (avg-temp destinations))
-(println "Destination in budget:" (filter-by-budget destinations 900))
-(println "Number of destinations within budget:" (count-within-budget destinations 900))
-(println "The hottest destination:" (hottest-destination destinations))
-
-
-(defn filter-by-climate [destinations preference]
-  (filter
-    (fn [d]
-      (case preference
-        "warm" (> (:temp d) 25)
-        "mild" (and (>= (:temp d) 15) (<= (:temp d) 25))
-        "cold" (< (:temp d) 15)
-        false))
-    destinations))
-(println "Cold destinations:" (filter-by-climate destinations "cold"))
-
-(defn cheapest-destination [destinations]
-  (reduce (fn [acc d]
-            (if (< (:price d) (:price acc)) d acc))
-          destinations))
-
-(println "Cheapest destination:" (cheapest-destination destinations))
-
-(defn filter-by-type [destinations trip-type]
-  (filter #(= (:type %) trip-type) destinations))
-
-(println "Culture trips:" (filter-by-type destinations "culture"))
-
-(defn avg-price-by-type [destinations trip-type]
-  (let [filtered (filter #(= (:type %) trip-type) destinations)
-        prices (map :price filtered)]
-    (if (seq prices)
-      (/ (reduce + prices) (count prices))
-      0)))
-(println "Average price for adventure trips:" (avg-price-by-type destinations "adventure"))
+        (when f
+          (println
+            (format "   Flight: validating=%s | operating=%s | price: %.2fE"
+                    (:airline f)
+                    (pr-str (:operating-airlines f))
+                    (double (or (:price f) 0.0))))
+          (doseq [[leg it] (map-indexed vector (:itineraries f))]
+            (println
+              (format "     Leg %d: %s -> %s | %s -> %s | %s"
+                      (inc leg)
+                      (:from it) (:to it)
+                      (:departure it) (:arrival it)
+                      (:flight-number it)))))))))
 
 
+(defn non-empty! [label s]
+  (let [v (str/trim (or s ""))]
+    (when (str/blank? v)
+      (throw (ex-info (str label " cannot be empty.") {:label label})))
+    v))
 
-(def user1 (ent/make-user "Ana" 600 "warm" "culture"))
-(println "Recommended destination:"
-         (logic/recommend-destination user1 destinations))
+(defn positive-int! [label s]
+  (let [n (parse-int s)]
+    (when (<= n 0)
+      (throw (ex-info (str label " must be > 0.") {:label label :value n})))
+    n))
 
-(travelproject.db/get-all-cities)
+(defn valid-date! [label s]
+  (try
+    (java.time.LocalDate/parse (str/trim s))
+    (catch Exception _
+      (throw (ex-info (str label " must be in YYYY-MM-DD format.") {:label label :value s})))))
 
-(travelproject.db/get-cities-by-country "Spain")
+(defn nights-between [check-in check-out]
+  (let [in  (java.time.LocalDate/parse check-in)
+        out (java.time.LocalDate/parse check-out)
+        n   (.between java.time.temporal.ChronoUnit/DAYS in out)]
+    (when (<= n 0)
+      (throw (ex-info "Check-out must be after check-in."
+                      {:check-in check-in :check-out check-out})))
+    (int n)))
+
+(def city->iata
+  {"Belgrade" "BEG"
+   "Beograd"  "BEG"
+   "Novi Sad" "QND"
+   "Niš"      "INI"
+   "Nis"      "INI"})
+
+(defn run-once []
+  (let [budget      (positive-int! "Budget" (prompt "Enter trip budget (EUR):"))
+
+        origin-city (non-empty! "Origin city" (prompt "Enter origin city (e.g., Belgrade):"))
+        origin-iata (or (loc/city->iata origin-city)
+                        (get city->iata origin-city)
+                        (throw (ex-info "Could not find IATA code for that city."
+                                        {:origin-city origin-city})))
+
+        check-in    (non-empty! "Check-in" (prompt "Enter check-in date (YYYY-MM-DD):"))
+        _           (valid-date! "Check-in" check-in)
+
+        check-out   (non-empty! "Check-out" (prompt "Enter check-out date (YYYY-MM-DD):"))
+        _           (valid-date! "Check-out" check-out)
+
+        transport   (parse-transport (prompt "Transport (plane/car/any):"))
+        nights      (nights-between check-in check-out)
+        trip-type (parse-trip-type (prompt "Trip type (culture/adventure/relax) [optional]:"))
+        req {:budget budget
+             :origin-iata origin-iata
+             :origin-city origin-city
+             :check-in check-in
+             :check-out check-out
+             :nights nights
+             :transport transport
+             :trip-type trip-type}
+
+        results (rb/recommend-by-budget req rb/candidates)]
+
+    (println (format "\nOrigin: %s (%s)" origin-city origin-iata))
+    (println (str "Trip length: " nights " nights"))
+    (print-results results)))
 
 
-(defn city-distance [city-a city-b]
-  (let [from (geo/city-coords city-a)
-        to   (geo/city-coords city-b)]
-    (long (Math/round (dist/distance from to)))))
-
-(city-distance "Belgrade" "Rome")
-
-(city-distance "Belgrade" "Budapest")
-(geo/city-coords "Belgrade")
-(geo/city-coords "Budapest")
-(defn choose-transport [car-cost flight-cost]
-  (if (< flight-cost car-cost)
-    {:type :flight :cost flight-cost}
-    {:type :car :cost car-cost}))
-
-
-
-;;new
-
-(rb/recommend-by-budget
-  {:budget 800
-   :origin-iata "BEG"
-   :origin-city "Belgrade"
-   :transport :any
-   :check-in "2026-03-15"
-   :check-out "2026-03-20"
-   :nights 5}
-  rb/candidates)
+(defn -main [& _args]
+  (println "=== Smart Travel Recommender (MVP) ===")
+  (loop []
+    (let [ok?
+          (try
+            (run-once)
+            true
+            (catch Exception e
+              (println "\nInput error:" (.getMessage e))
+              (println "Let's try again.\n")
+              false))]
+      (when (not ok?)
+        (recur)))))
 

@@ -18,9 +18,6 @@
     (json/parse-string (:body resp) true)))
 
 
-
-(hotels-response "Rome" "2026-03-15" "2026-03-20")
-
 (defn extract-prices
   [response]
   (->> (:properties response)
@@ -42,13 +39,39 @@
   (* (avg-hotel-price-per-night city check-in check-out)
      nights))
 
-(accommodation-cost "Rome" "2026-03-15" "2026-03-20" 5)
-(extract-prices
-  (hotels-response "Rome" "2026-03-15" "2026-03-20"))
-;; => (95 110 130 89 ...)
+(defn normalize-hotel
+  [p nights]
+  (let [ppn (or (get-in p [:rate_per_night :extracted_lowest])
+                (get-in p [:rate_per_night :extracted])
+                (get-in p [:rate_per_night :lowest]))
+        rating (or (get p :overall_rating)
+                   (get p :rating))
+        name (or (get p :name) (get p :property_name))]
+    {:name name
+     :rating rating
+     :price-per-night ppn
+     :total-price (when (number? ppn) (* (double ppn) (double nights)))}))
 
-(avg-hotel-price-per-night "Rome" "2026-03-15" "2026-03-20")
-;; => npr. 104.6
+(defn hotel-options
+  [city check-in check-out nights]
+  (let [resp (hotels-response city check-in check-out)
+        props (:properties resp)]
+    (->> props
+         (map #(normalize-hotel % nights))
+         (filter #(and (:name %) (number? (:price-per-night %))))
+         vec)))
 
-(accommodation-cost "Rome" "2026-03-15" "2026-03-20" 5)
-;; => npr. 523.0
+(defn best-hotel
+  [options max-budget]
+  (->> options
+       (filter (fn [h]
+                 (and (number? (:total-price h))
+                      (<= (double (:total-price h)) (double max-budget)))))
+       (sort-by (juxt (comp - (fn [h] (double (or (:rating h) 0.0))))
+                      (fn [h] (double (:total-price h)))))
+       first))
+
+(defn recommend-hotel
+  [city check-in check-out nights max-budget]
+  (let [opts (hotel-options city check-in check-out nights)]
+    (best-hotel opts max-budget)))

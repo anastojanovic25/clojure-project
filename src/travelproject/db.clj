@@ -22,6 +22,20 @@
         ["SELECT 1"]
         {:builder-fn rs/as-unqualified-lower-maps}))
 
+(defn city-scores
+  "Returns a row from cities_raw with preference scores for a given city name."
+  [city]
+  (first
+    (jdbc/execute!
+      ds
+      ["SELECT city, country, region,
+              culture, adventure, nature, beaches, nightlife, cuisine, wellness
+        FROM cities_raw
+        WHERE LOWER(city) = LOWER(?)
+        LIMIT 1"
+       city]
+      {:builder-fn rs/as-unqualified-lower-maps})))
+
 (defn fetch-destinations []
   (jdbc/execute!
     ds
