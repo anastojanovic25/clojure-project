@@ -4,7 +4,8 @@
     [travelproject.api.accommodation :as acc]
     [travelproject.api.distance :as dist]
     [travelproject.api.geocoding :as geo]
-    [travelproject.recommender.trip-type :as tt]))
+    [travelproject.recommender.trip-type :as tt]
+    [travelproject.api.location :as loc]))
 
 
 (def default-cost-per-km 0.15)        ;; fuel+wear approx
@@ -35,6 +36,7 @@
   (let [one-way (flight/flight-cost origin-iata city-iata check-in)
         flight-offer (when (and origin-iata city-iata check-in check-out)
                        (flight/best-flight-offer origin-iata city-iata check-in check-out))
+
         planeE (cond
                  (and flight-offer (number? (:price flight-offer)))
                  (double (:price flight-offer))
@@ -134,9 +136,20 @@
 
 (defn recommend-for-city
   [req city]
-  (let [cand {:city city}]
-    (when-let [r (estimate-trip-cost req cand)]
+  (let [cand {:city city
+              :city-iata (loc/city->airport-iata city)}
+        r    (estimate-trip-cost req cand)
+        b    (:budget req)]
+    (cond
+      (nil? r) []
+
+      (and (number? b) (number? (:totalE r))
+           (> (double (:totalE r)) (double b)))
+      [(assoc r :overE (round2 (- (double (:totalE r)) (double b))))]
+
+      :else
       [r])))
+
 
 (def candidates
   [{:city "Rome" :city-iata "FCO"}

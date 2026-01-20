@@ -23,7 +23,6 @@
                                :throw-exceptions false})
               body  (json/parse-string (:body resp) true)
               data  (:data body)
-              ;; prefer CITY if present, else first match
               code  (or (some (fn [x]
                                 (when (= "CITY" (:subType x))
                                   (:iataCode x)))
@@ -33,3 +32,26 @@
             (swap! iata-cache assoc k code))
           code))))
 
+(defonce airport-iata-cache (atom {}))
+
+(defn city->airport-iata
+   [city]
+  (let [k (norm city)]
+    (or (get @airport-iata-cache k)
+        (let [token (flight/access-token)
+              resp  (http/get "https://test.api.amadeus.com/v1/reference-data/locations"
+                              {:headers {"Authorization" (str "Bearer " token)}
+                               :query-params {:keyword city
+                                              :subType "CITY,AIRPORT"
+                                              :page {:limit 10}}
+                               :throw-exceptions false})
+              body  (json/parse-string (:body resp) true)
+              data  (:data body)
+              code  (or (some (fn [x]
+                                (when (= "AIRPORT" (:subType x))
+                                  (:iataCode x)))
+                              data)
+                        (city->iata city))]
+          (when code
+            (swap! airport-iata-cache assoc k code))
+          code))))

@@ -35,19 +35,22 @@
       (let [score  (double (or (:typescore r) 0.0))
             reason (when (= (:requested-transport r) :any)
                      (some-> (:reason r) name))
+            over-msg (when (number? (:overE r))
+                       (format " | OVER BUDGET +%.2fE" (double (:overE r))))
             h      (:hotel r)
             f      (:flight r)]
         (println
-          (format "%d) %s | total: %.2fE | transport: %s (%.2fE) | hotel: %.2fE | type: %s | score: %.2f%s"
+          (format "%d) %s | total: %.2fE%s | transport: %s (%.2fE) | hotel: %.2fE | type: %s | score: %.2f%s"
                   (inc idx)
                   (:city r)
                   (double (:totalE r))
+                  (or over-msg "")
                   (name (:transport r))
                   (double (:transportE r))
                   (double (:hotelE r))
                   (or (:tripType r)(:trip-type r) "-")
                   score
-                  (if reason (str " | reason: " reason) "")))
+                  (str (if reason (str " | reason: " reason) ""))))
 
         (when h
           (println
@@ -110,7 +113,7 @@
   (let [budget      (positive-int! "Budget" (prompt "Enter trip budget (EUR):"))
 
         origin-city (non-empty! "Origin city" (prompt "Enter origin city (e.g., Belgrade):"))
-        origin-iata (or (loc/city->iata origin-city)
+        origin-iata (or (loc/city->airport-iata origin-city)
                         (get city->iata origin-city)
                         (throw (ex-info "Could not find IATA code for that city."
                                         {:origin-city origin-city})))
