@@ -1,11 +1,13 @@
 (ns travelproject.api.flight
   (:require [clj-http.client :as http]
-            [cheshire.core :as json]))
+            [cheshire.core :as json]
+            [travelproject.config :as config]))
 
+(def client-id
+  (config/require! [:amadeus :client-id] "Missing Amadeus client-id in config.edn"))
 
-(def client-id "4XdEeeSY2eRG8DRJxbDg1Z7AVxfpqUT4")
-(def client-secret "cvvFqXcNQ6RC00cK")
-
+(def client-secret
+  (config/require! [:amadeus :client-secret] "Missing Amadeus client-secret in config.edn"))
 
 (defn access-token []
   (let [resp (http/post

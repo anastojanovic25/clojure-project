@@ -1,8 +1,10 @@
 (ns travelproject.api.geocoding
   (:require [clj-http.client :as http]
-            [cheshire.core :as json]))
+            [cheshire.core :as json]
+            [travelproject.config :as config]))
 
-(def api-key "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6Ijc5ZjljMjQ5NjYwZjRlZDQ4MDI2ZThhNDJjMzg3N2QwIiwiaCI6Im11cm11cjY0In0=")
+(def api-key
+  (config/require! [:ors :api-key] "Missing ORS api-key in config.edn"))
 
 (defn city-coords [city]
   (let [resp (http/get "https://api.openrouteservice.org/geocode/search"

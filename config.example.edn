@@ -1,0 +1,8 @@
+{:serpapi {:key "YOUR_SERPAPI_KEY"}
+
+ :ors {:api-key "YOUR_ORS_API_KEY"}
+
+ :amadeus {:client-id "YOUR_AMADEUS_CLIENT_ID"
+           :client-secret "YOUR_AMADEUS_CLIENT_SECRET"}
+
+ :weather {:api-key "YOUR_WEATHER_API_KEY"}}

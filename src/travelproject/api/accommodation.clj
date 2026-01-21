@@ -1,8 +1,10 @@
 (ns travelproject.api.accommodation
   (:require [clj-http.client :as http]
-            [cheshire.core :as json]))
+            [cheshire.core :as json]
+            [travelproject.config :as config]))
 
-(def serpapi-key "686c671ff5eea556fd317db193e38b71b3f957dc8595d6f73ab3aaafc94f539f")
+(def serpapi-key
+  (config/require! [:serpapi :key] "Missing SerpApi key in config.edn"))
 
 (defn hotels-response
   [city check-in check-out]

@@ -1,8 +1,10 @@
 (ns travelproject.api.weather
   (:require [clj-http.client :as http]
-            [cheshire.core :as json]))
+            [cheshire.core :as json]
+            [travelproject.config :as config]))
 
-(def api-key "fb82166bcbbe48e1884132135260901")
+(def api-key
+  (config/require! [:weather :api-key] "Missing Weather api-key in config.edn"))
 
 (defn current-weather [city]
   (let [resp (http/get "https://api.weatherapi.com/v1/current.json"

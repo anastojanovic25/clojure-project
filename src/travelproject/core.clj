@@ -117,7 +117,7 @@
                         (get city->iata origin-city)
                         (throw (ex-info "Could not find IATA code for that city."
                                         {:origin-city origin-city})))
-
+        origin-city-iata (or (loc/city->iata origin-city) origin-iata)
         dest-city  (prompt "Destination city [leave empty for recommendations]:")
         dest-city  (when (seq dest-city) dest-city)
 
@@ -132,6 +132,7 @@
         trip-type (parse-trip-type (prompt "Trip type (culture/adventure/relax) [optional]:"))
         req {:budget budget
              :origin-iata origin-iata
+             :origin-city-iata origin-city-iata
              :origin-city origin-city
              :check-in check-in
              :check-out check-out
@@ -141,7 +142,7 @@
 
         results (if dest-city
                   (rb/recommend-for-city req dest-city)
-                  (rb/recommend-by-budget req rb/candidates))]
+                  (rb/recommend-by-budget req (rb/dynamic-candidates req) ))]
 
     (println (str "Trip length: " nights " nights"))
     (print-results results)))

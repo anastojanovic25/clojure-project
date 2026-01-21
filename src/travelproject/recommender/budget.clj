@@ -5,12 +5,21 @@
     [travelproject.api.distance :as dist]
     [travelproject.api.geocoding :as geo]
     [travelproject.recommender.trip-type :as tt]
-    [travelproject.api.location :as loc]))
+    [travelproject.api.location :as loc]
+    [travelproject.api.inspiration :as insp]))
 
 
 (def default-cost-per-km 0.15)        ;; fuel+wear approx
 (def default-car-min-fee 60.0)        ;; fixed baseline (parking, misc, etc.)
-(def default-car-tolls   50.0)        ;; rough tolls/vignettes baseline
+
+(defn simulate-tolls-eur
+  [km]
+  (let [km (double (max 0.0 (or km 0.0)))]
+    (cond
+      (< km 200)  (+ 5.0  (rand 8.0))     ;; 5-13
+      (< km 600)  (+ 7.0  (rand 25.0))    ;; 7–32
+      (< km 1200) (+ 10.0 (rand 40.0))    ;; 10–50
+      :else       (+ 20.0 (rand 80.0))))) ;; 20–100
 
 
 (defn round2 [x]
@@ -18,16 +27,17 @@
     (/ (Math/round (* 100.0 (double x))) 100.0)))
 
 (defn car-trip-cost
-  [{:keys [origin-city city cost-per-km car-min-fee car-tolls]}]
+  [{:keys [origin-city city cost-per-km car-min-fee]}]
   (let [from (geo/city-coords origin-city)
         to   (geo/city-coords city)]
     (when (and from to)
       (let [km  (dist/distance from to)
             cpk (double (or cost-per-km default-cost-per-km))
             min-fee (double (or car-min-fee default-car-min-fee))
-            tolls   (double (or car-tolls   default-car-tolls))]
+            tolls   (double (simulate-tolls-eur km))]
         (when (number? km)
           (+ (* 2.0 (double km) cpk) min-fee tolls))))))
+
 
 (defn transport-cost
   [{:keys [transport origin-iata origin-city check-in check-out
@@ -86,7 +96,7 @@
                          :origin-iata origin-iata
                          :origin-city origin-city
                          :check-in    check-in
-                         :check-out   check-out   ;; <-- DODAJ OVO
+                         :check-out   check-out
                          :cost-per-km cost-per-km
                          :car-min-fee car-min-fee
                          :car-tolls   car-tolls}
@@ -156,3 +166,11 @@
    {:city "Athens" :city-iata "ATH"}
    {:city "Barcelona" :city-iata "BCN"}
    {:city "Paris" :city-iata "CDG"}])
+
+(defn dynamic-candidates
+  [{:keys [origin-city-iata origin-iata budget]}]
+  (let [max-flight (int (* 0.4 (double budget)))
+        origin (or origin-city-iata origin-iata)
+        cands (insp/flight-destinations origin max-flight)]
+    (if (seq cands) cands candidates)))
+
