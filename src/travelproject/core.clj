@@ -27,6 +27,70 @@
     "relax"    :relax
     nil))
 
+(def dt-in  (java.time.format.DateTimeFormatter/ofPattern "yyyy-MM-dd'T'HH:mm:ss"))
+(def dt-out (java.time.format.DateTimeFormatter/ofPattern "dd.MM.yyyy HH:mm"))
+
+(defn fmt-dt [s]
+  (try
+    (-> (java.time.LocalDateTime/parse s dt-in)
+        (.format dt-out))
+    (catch Exception _
+      (or s ""))))
+
+(def city->iata
+  {"Belgrade" "BEG"
+   "Beograd"  "BEG"
+   "Novi Sad" "QND"
+   "Niš"      "INI"
+   "Nis"      "INI"})
+
+(def airport-names
+  {"AMS" "Amsterdam (Schiphol)"
+   "FCO" "Rome (Fiumicino)"
+   "CIA" "Rome (Ciampino)"
+   "CDG" "Paris (Charles de Gaulle)"
+   "ORY" "Paris (Orly)"
+   "FRA" "Frankfurt"
+   "MUC" "Munich"
+   "VIE" "Vienna"
+   "ZRH" "Zurich"
+   "IST" "Istanbul"
+   "SAW" "Istanbul (Sabiha Gokcen)"
+   "DOH" "Doha (Hamad)"
+   "DXB" "Dubai"
+   "AUH" "Abu Dhabi"
+   "MAD" "Madrid"
+   "BCN" "Barcelona"
+   "ATH" "Athens"
+   "LHR" "London (Heathrow)"
+   "LGW" "London (Gatwick)"})
+
+(defn airport-label [code]
+  (let [c (some-> code str/trim str/upper-case)]
+    (if-let [nm (get airport-names c)]
+      (str c " (" nm ")")
+      (or c ""))))
+
+(defn format-itinerary [{:keys [from to departure arrival flight-number stops via]}]
+  (str from " -> " to
+       " | " (fmt-dt departure) " - " (fmt-dt arrival)
+       " | " (or flight-number "N/A")
+       " | stops: " (or stops 0)
+       (when (seq via)
+         (str " | via: " (str/join ", " (map airport-label via))))))
+
+
+(defn print-flight-offer [offer]
+  (println "----------------------------------------")
+  (println "Flight offer:")
+  (println "  Price:" (get-in offer [:price :total]) (get-in offer [:price :currency] ""))
+  (println "  Airlines:" (or (seq (:airlines offer)) "N/A"))
+  (println "  Itineraries:")
+  (doseq [it (:itineraries offer)]
+    (println "   -" (format-itinerary it)))
+  (println "----------------------------------------"))
+
+
 (defn print-results [results]
   (println "\nTop recommendations:")
   (if (empty? results)
@@ -61,18 +125,16 @@
                     (double (or (:total-price h) 0.0)))))
 
         (when f
-          (println
-            (format "   Flight: validating=%s | operating=%s | price: %.2fE"
-                    (:airline f)
-                    (pr-str (:operating-airlines f))
-                    (double (or (:price f) 0.0))))
+          (let [total-stops (reduce + 0 (map #(or (:stops %) 0) (:itineraries f)))]
+            (println
+              (format "   Flight: %.2fE | total stops: %d"
+                      (double (:price f))
+                      total-stops)))
           (doseq [[leg it] (map-indexed vector (:itineraries f))]
             (println
-              (format "     Leg %d: %s -> %s | %s -> %s | %s"
-                      (inc leg)
-                      (:from it) (:to it)
-                      (:departure it) (:arrival it)
-                      (:flight-number it)))))))))
+              (format "     %s: %s"
+                      (if (zero? leg) "Outbound" "Return")
+                      (format-itinerary it)))))))))
 
 
 (defn non-empty! [label s]
@@ -102,12 +164,6 @@
                       {:check-in check-in :check-out check-out})))
     (int n)))
 
-(def city->iata
-  {"Belgrade" "BEG"
-   "Beograd"  "BEG"
-   "Novi Sad" "QND"
-   "Niš"      "INI"
-   "Nis"      "INI"})
 
 (defn run-once []
   (let [budget      (positive-int! "Budget" (prompt "Enter trip budget (EUR):"))
