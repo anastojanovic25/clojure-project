@@ -21,13 +21,6 @@
     "any"   :any
     :any))
 
-(defn parse-trip-type [s]
-  (case (clojure.string/lower-case (clojure.string/trim (or s "")))
-    "culture"  :culture
-    "adventure" :adventure
-    "relax"    :relax
-    nil))
-
 (defn d0 [x] (double (or x 0.0)))
 
 (defn yes? [s]
@@ -92,15 +85,14 @@
   (if (empty? results)
     (println "No destinations fit your budget for the selected dates.")
     (doseq [[idx r] (map-indexed vector results)]
-      (let [score  (d0 (or (:typescore r) 0.0))
-            reason (when (= (:requested-transport r) :any)
+      (let [reason (when (= (:requested-transport r) :any)
                      (some-> (:reason r) name))
             over-msg (when (number? (:overE r))
                        (format " | OVER BUDGET +%.2fE" (d0 (:overE r))))
             h      (:hotel r)
             f      (:flight r)]
         (println
-          (format "%d) %s | total: %.2fE%s | transport: %s (%.2fE) | hotel: %.2fE | type: %s | score: %.2f%s"
+          (format "%d) %s | total: %.2fE%s | transport: %s (%.2fE) | hotel: %.2fE "
                   (inc idx)
                   (:city r)
                   (d0 (:totalE r))
@@ -108,8 +100,6 @@
                   (name (:transport r))
                   (d0 (:transportE r))
                   (d0 (:hotelE r))
-                  (or (:tripType r)(:trip-type r) "-")
-                  score
                   (str (if reason (str " | reason: " reason) ""))))
 
         (when h
@@ -229,7 +219,6 @@
 
         transport   (parse-transport (prompt "Transport (plane/car/any):"))
         nights      (nights-between check-in check-out)
-        trip-type (parse-trip-type (prompt "Trip type (culture/adventure/relax) [optional]:"))
         req {:budget budget
              :origin-iata origin-iata
              :origin-city-iata origin-city-iata
@@ -237,8 +226,7 @@
              :check-in check-in
              :check-out check-out
              :nights nights
-             :transport transport
-             :trip-type trip-type}
+             :transport transport}
 
         results (if dest-city
                   (rb/recommend-for-city req dest-city)
@@ -261,7 +249,7 @@
 
               (when (yes? (prompt "\nCheck more hotels for another destination? (y/n):"))
                 (recur)))
-            (println "Cancelled - No extra hotel suggestions.")))))
+            (println "Cancelled.")))))
     ))
 
 

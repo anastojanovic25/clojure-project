@@ -4,7 +4,6 @@
     [travelproject.api.accommodation :as acc]
     [travelproject.api.distance :as dist]
     [travelproject.api.geocoding :as geo]
-    [travelproject.recommender.trip-type :as tt]
     [travelproject.api.location :as loc]
     [travelproject.api.inspiration :as insp]))
 
@@ -132,16 +131,13 @@
 
 
 (defn recommend-by-budget
-  [{:keys [budget trip-type] :as req} candidates]
+  [{:keys [budget] :as req} candidates]
   (->> candidates
        (keep (fn [cand] (estimate-trip-cost req cand)))
        (filter (fn [m]
                  (and (number? (:totalE m))
                       (<= (:totalE m) budget))))
-       (map (fn [m]
-              (let [s (or (tt/score-city trip-type (:city m)) 0.0)]
-                (assoc m :typeScore (double s) :tripType trip-type))))
-       (sort-by (juxt (comp - :typeScore) :totalE))
+       (sort-by :totalE)
        (take 5)))
 
 (defn recommend-for-city
@@ -165,7 +161,10 @@
   [{:city "Rome" :city-iata "FCO"}
    {:city "Athens" :city-iata "ATH"}
    {:city "Barcelona" :city-iata "BCN"}
-   {:city "Paris" :city-iata "CDG"}])
+   {:city "Paris" :city-iata "CDG"}
+   {:city "London" :city-iata "LON"}
+   {:city "Berlin" :city-iata "BER"}
+   {:city "Prague" :city-iata "PRG"}])
 
 (defn dynamic-candidates
   [{:keys [origin-city-iata origin-iata budget]}]
