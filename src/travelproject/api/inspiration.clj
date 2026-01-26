@@ -6,10 +6,6 @@
 
 (defonce loc-name-cache (atom {}))
 
-(defn- safe-str [s]
-  (let [v (some-> s str/trim)]
-    (when (and v (not (str/blank? v))) v)))
-
 (defn flight-destinations
   [origin-iata max-price]
   (let [token (flight/access-token)]

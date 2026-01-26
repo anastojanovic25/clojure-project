@@ -3,7 +3,7 @@
             [cheshire.core :as json]
             [travelproject.config :as config]))
 
-(def serpapi-key
+(defn- serpapi-key []
   (config/require! [:serpapi :key] "Missing SerpApi key in config.edn"))
 
 (defn hotels-response
@@ -15,7 +15,7 @@
                                :location city
                                :check_in_date check-in
                                :check_out_date check-out
-                               :api_key serpapi-key}
+                               :api_key (serpapi-key)}
                 :throw-exceptions false})]
     (json/parse-string (:body resp) true)))
 

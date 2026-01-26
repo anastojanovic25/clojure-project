@@ -26,16 +26,17 @@
     (/ (Math/round (* 100.0 (double x))) 100.0)))
 
 (defn car-trip-cost
-  [{:keys [origin-city city cost-per-km car-min-fee]}]
+  [{:keys [origin-city city cost-per-km car-min-fee car-tolls]}]
   (let [from (geo/city-coords origin-city)
         to   (geo/city-coords city)]
     (when (and from to)
-      (let [km  (dist/distance from to)
-            cpk (double (or cost-per-km default-cost-per-km))
-            min-fee (double (or car-min-fee default-car-min-fee))
-            tolls   (double (simulate-tolls-eur km))]
+      (let [km      (dist/distance from to)
+            cpk     (double (or cost-per-km default-cost-per-km))
+            min-fee (double (or car-min-fee default-car-min-fee))]
         (when (number? km)
-          (+ (* 2.0 (double km) cpk) min-fee tolls))))))
+          (let [tolls (double (or (when (number? car-tolls) car-tolls)
+                                  (simulate-tolls-eur km)))]
+            (+ (* 2.0 (double km) cpk) min-fee tolls)))))))
 
 
 (defn transport-cost
@@ -76,14 +77,7 @@
 
                p {:mode :plane :transportE p :planeE p :carE c :reason :only-option :flight flight-offer}
                c {:mode :car   :transportE c :planeE p :carE c :reason :only-option}
-               :else nil)
-      (cond
-        (and p c) (if (<= p c)
-                    {:mode :plane :transportE p :planeE p :carE c :flight flight-offer}
-                    {:mode :car   :transportE c :planeE p :carE c})
-        p {:mode :plane :transportE p :planeE p :carE c :flight flight-offer}
-        c {:mode :car   :transportE c :planeE p :carE c}
-        :else nil))))
+               :else nil))))
 
 (defn estimate-trip-cost
   [{:keys [transport check-in check-out nights budget origin-iata origin-city

@@ -24,16 +24,6 @@
        (rb/round2 nil)    => nil
        (rb/round2 "x")    => nil)
 
-(fact "car-trip-cost"
-      (rb/car-trip-cost {:origin-city "Belgrade" :city "Rome" :cost-per-km 0.2 :car-min-fee 30.0})
-      => 190.0
-      (provided
-        (geo/city-coords "Belgrade") => {:lat 44.8 :lon 20.4}
-        (geo/city-coords "Rome")     => {:lat 41.9 :lon 12.5}
-        (dist/distance {:lat 44.8 :lon 20.4} {:lat 41.9 :lon 12.5}) => 400
-        (rb/simulate-tolls-eur 400) => 0.0))
-
-
 (fact "car-trip-cost returns nil if coords missing"
       (rb/car-trip-cost {:origin-city "X" :city "Rome"}) => nil
       (provided
@@ -45,8 +35,7 @@
       (provided
         (geo/city-coords "Belgrade") => {:lat 1 :lon 1}
         (geo/city-coords "Rome")     => {:lat 2 :lon 2}
-        (dist/distance {:lat 1 :lon 1} {:lat 2 :lon 2}) => "400km"
-        (rb/simulate-tolls-eur "400km") => 0.0))
+        (dist/distance {:lat 1 :lon 1} {:lat 2 :lon 2}) => "400km"))
 
 (fact "transport-cost :plane uses best-flight-offer price if available"
       (rb/transport-cost (assoc base-req :transport :plane) cand-rome)

@@ -3,13 +3,13 @@
             [cheshire.core :as json]
             [travelproject.config :as config]))
 
-(def api-key
+(defn- api-key []
   (config/require! [:ors :api-key] "Missing ORS api-key in config.edn"))
 
 (defn distance [from to]
   (let [resp (http/post
                "https://api.openrouteservice.org/v2/matrix/driving-car"
-               {:headers {"Authorization" api-key
+               {:headers {"Authorization" (api-key)
                           "Content-Type" "application/json"
                           "Accept" "application/json"}
                 :throw-exceptions false

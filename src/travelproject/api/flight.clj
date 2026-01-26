@@ -3,18 +3,18 @@
             [cheshire.core :as json]
             [travelproject.config :as config]))
 
-(def client-id
+(defn- client-id []
   (config/require! [:amadeus :client-id] "Missing Amadeus client-id in config.edn"))
 
-(def client-secret
+(defn- client-secret []
   (config/require! [:amadeus :client-secret] "Missing Amadeus client-secret in config.edn"))
 
 (defn access-token []
   (let [resp (http/post
                "https://test.api.amadeus.com/v1/security/oauth2/token"
-               {:form-params      {:grant_type    "client_credentials"
-                                   :client_id     client-id
-                                   :client_secret client-secret}
+               {:form-params      {:grant_type "client_credentials"
+                                   :client_id (client-id)
+                                   :client_secret (client-secret) }
                 :throw-exceptions false})
         body (json/parse-string (:body resp) true)]
     (:access_token body)))
