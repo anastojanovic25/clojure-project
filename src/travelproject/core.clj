@@ -4,7 +4,8 @@
     [clojure.string :as str]
     [travelproject.recommender.budget :as rb]
     [travelproject.api.location :as loc]
-    [travelproject.api.accommodation :as acc]))
+    [travelproject.api.accommodation :as acc]
+    [travelproject.api.plan-ai :as ai]))
 
 (defn prompt [label]
   (print (str label " "))
@@ -118,7 +119,7 @@
                       total-stops)))
           (doseq [[leg it] (map-indexed vector (:itineraries f))]
             (println
-              (format "     %s: %s"
+              (format "%s: %s"
                       (if (zero? leg) "Outbound" "Return")
                       (format-itinerary it)))))))))
 
@@ -197,7 +198,58 @@
                   (println (format "Invalid number. Please enter a value between 1 and %d." n))
                   (recur))))))))))
 
+(defn pick-destination
+  [results]
+  (let [n (count results)]
+    (cond
+      (zero? n) nil
+      (= n 1)   (first results)
+      :else
+      (loop []
+        (let [raw (prompt (format "Choose destination number for the plan (1-%d), or 'q' to cancel:" n))
+              s   (str/trim (or raw ""))]
+          (cond
+            (or (str/blank? s) (= "q" (str/lower-case s)))
+            nil
+            :else
+            (let [idx (try (Integer/parseInt s)
+                           (catch Exception _ -1))]
+              (if (<= 1 idx n)
+                (nth results (dec idx))
+                (do
+                  (println (format "Invalid number. Please enter a value between 1 and %d." n))
+                  (recur))))))))))
 
+(defn do-ai-plan [results nights budget transport]
+  (if (seq results)
+    (if-let [r (pick-destination results)]
+      (let [ctx {:city (:city r)
+                 :nights nights
+                 :budget budget
+                 :transport transport}
+            plan (ai/generate-activity-plan ctx)]
+        (if (seq plan)
+          (do
+            (println "\n=== AI Activity Plan ===\n")
+            (println plan))
+          (println "\nAI plan is not available (missing or invalid API key).")))
+      (println "Cancelled."))
+    (println "No results available to generate a plan.")))
+
+(defn menu-choice
+  []
+  (println "\nWhat would you like to do next?")
+  (println "  1) Show more hotels")
+  (println "  2) Generate an AI activity plan")
+  (println "  3) Exit")
+  (let [c (str/trim (or (read-line) ""))]
+    (case c
+      "1" :more-hotels
+      "2" :ai-plan
+      "3" :exit
+      (do
+        (println "Invalid choice. Please enter 1, 2, or 3.")
+        (recur)))))
 
 (defn run-once []
   (let [budget      (positive-int! "Budget" (prompt "Enter trip budget (EUR):"))
@@ -236,20 +288,26 @@
     (print-results results)
 
     (when (seq results)
-      (when (yes? (prompt "Do you want more hotel suggestions within your budget? (y/n):"))
-        (loop []
-          (if-let [r (pick-result results)]
-            (let [remaining (max 0.0 (- (d0 (:budget req)) (d0 (:transportE r))))
-                  extras    (extra-hotels-for-result req r 3)]
-              (println (format "\nMore hotels in %s within remaining hotel budget %.2fE:"
-                               (:city r) remaining))
-              (if (empty? extras)
-                (println "No additional hotels were found within your budget.")
-                (doseq [h extras] (print-hotel-line h)))
-
-              (when (yes? (prompt "\nCheck more hotels for another destination? (y/n):"))
-                (recur)))
-            (println "Cancelled.")))))
+      (loop []
+        (case (menu-choice)
+          :more-hotels
+          (do
+            (if-let [r (pick-result results)]
+              (let [remaining (max 0.0 (- (d0 (:budget req)) (d0 (:transportE r))))
+                    extras    (extra-hotels-for-result req r 3)]
+                (println (format "\nMore hotels in %s within remaining hotel budget %.2fE:"
+                                 (:city r) remaining))
+                (if (empty? extras)
+                  (println "No additional hotels were found within your budget.")
+                  (doseq [h extras] (print-hotel-line h))))
+              (println "Cancelled."))
+            (recur))
+          :ai-plan
+          (do
+            (do-ai-plan results nights budget transport)
+            (recur))
+          :exit
+          (println "Goodbye!"))))
     ))
 
 
