@@ -5,4 +5,5 @@
  :amadeus {:client-id "YOUR_AMADEUS_CLIENT_ID"
            :client-secret "YOUR_AMADEUS_CLIENT_SECRET"}
 
- :weather {:api-key "YOUR_WEATHER_API_KEY"}}
+ :groq {:api-key "YOUR_GROQ_API_KEY"
+        :model "llama-3.1-8b-instant"}}
