@@ -56,19 +56,6 @@
             (swap! airport-iata-cache assoc k code))
           code))))
 
-(defn city->city-iata
-  [city]
-  (let [token (flight/access-token)
-        resp  (http/get "https://test.api.amadeus.com/v1/reference-data/locations"
-                        {:headers {"Authorization" (str "Bearer " token)}
-                         :query-params {:keyword city
-                                        :subType "CITY"
-                                        :page {:limit 10}}
-                         :throw-exceptions false})
-        body  (json/parse-string (:body resp) true)
-        data  (:data body)]
-    (or (-> data first :iataCode)
-        (city->airport-iata city))))
 
 (defonce airport-label-cache (atom {}))
 

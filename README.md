@@ -10,7 +10,7 @@ The program supports travel planning within a user-defined budget by combining:
 > This is a terminal-based project.  
 > The focus of the project is on **decision logic**, **robust API integration**, and **testability**.
 
----
+
 
 ## 1) Project Goal and Scope
 
@@ -25,7 +25,7 @@ To build a CLI tool that recommends realistic travel options that fit the user�
 - Provide an interactive menu for additional hotel suggestions or AI itinerary generation.
 - Ensure the project is portable (runs on another machine) and testable (tests do not require live APIs).
 
----
+
 
 ## 2) User Flows (What the Program Does)
 
@@ -60,7 +60,7 @@ If the user enters a destination:
 3. Recommends a hotel within the remaining budget.
 4. Offers the same post-results menu.
 
----
+
 
 ## 3) Example Run 
 
@@ -85,7 +85,6 @@ Below is a short example of a typical terminal session (format may vary dependin
       2) Generate an AI activity plan
       3) Exit
 
----
 
 ## 4) Inputs Collected from the User
 
@@ -99,7 +98,7 @@ At runtime, the program asks for:
 
 The number of nights is derived from the date range and is used for hotel pricing.
 
----
+
 
 ## 5) Core Decision Logic
 
@@ -120,7 +119,7 @@ Only destinations with `totalE <= budget` are kept.
 - The hotel is selected based on availability and budget constraints (remaining budget after transport).
 - The user can request additional hotel suggestions for a selected destination from the menu.
 
----
+
 
 ## 6) Key Features
 
@@ -130,7 +129,7 @@ Only destinations with `totalE <= budget` are kept.
 - Extra hotel suggestions for the selected destination (menu option 1)
 - AI activity plan generation (menu option 2)
 
----
+
 
 ## 7) External APIs Used (with documentation links)
 
@@ -151,7 +150,7 @@ This project integrates real-world data via external services:
 - **Groq API (OpenAI-compatible endpoint)** - AI-generated activity plan  
   Docs: https://console.groq.com/docs
 
----
+
 
 ## 8) Setup and Running the Program
 
@@ -165,7 +164,7 @@ This project integrates real-world data via external services:
 
 The application runs in the terminal and guides the user through prompts.
 
----
+
 
 ## 9) Configuration (API Keys) - `config.edn`
 
@@ -184,7 +183,7 @@ Then open `config.edn` and paste your API keys.
 ### Running without keys
 The program can start without keys, but API-dependent features (hotels / flights / AI plan) will be unavailable and the program will print a clear message.
 
----
+
 
 ## 10) AI Activity Plan (Optional Feature)
 
@@ -199,7 +198,7 @@ The program asks the user to select a destination (from the previously computed 
 If the AI API key is missing or invalid, the program continues normally and prints:
 `AI plan is not available (missing or invalid API key).`
 
----
+
 
 ## 11) Testing Strategy (Midje)
 
@@ -220,7 +219,7 @@ External API calls are **stubbed** (mocked) to ensure tests:
 Run tests:
 > lein midje
 
----
+
 
 ## 12) Challenges Faced 
 
@@ -242,9 +241,9 @@ External APIs are not reliable for automated tests due to keys, network availabi
 
 **Solution:** tests use Midje stubs/mocks for external calls and validate only deterministic local logic.
 
----
 
-## 14) Literature / References
+
+## 13) Literature / References
 
 - Clojure Documentation- https://clojure.org/reference/documentation
 - Leiningen- https://leiningen.org/
@@ -256,12 +255,12 @@ External APIs are not reliable for automated tests due to keys, network availabi
 
 ---
 
-## 15) Project Structure
+## 14) Project Structure
 
-- `src/travelproject/core.clj` — CLI flow, prompts, menu, main entry point
-- `src/travelproject/recommender/` — budget evaluation and recommendation logic
-- `src/travelproject/api/` — integrations (hotels, flights, distance, AI plan)
-- `test/` — Midje tests
+- `src/travelproject/core.clj` - CLI flow, prompts, menu, main entry point
+- `src/travelproject/recommender/` - budget evaluation and recommendation logic
+- `src/travelproject/api/` - integrations (hotels, flights, distance, AI plan)
+- `test/` - Midje tests
 
 ---
 

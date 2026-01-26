@@ -39,8 +39,7 @@
          (keep (fn [offer] (Double/parseDouble (get-in offer [:price :total]))))
          (sort)
          (first))))
-;; (when-let [price (-> body :data first :price :total)]
-;;(Double/parseDouble price)) ) )
+
 
 (defn flight-offers
   [origin destination depart-date return-date max-results]
