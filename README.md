@@ -253,7 +253,15 @@ External APIs are not reliable for automated tests due to keys, network availabi
 - OpenRouteService API- https://openrouteservice.org/dev/
 - Groq API Documentation- https://console.groq.com/docs
 
----
+## Use of AI
+AI tools were used only as support.
+
+They were primarily used for language assistance in the README file
+(structuring and translation some keywords from Serbian to English).
+
+Additionally, after the main implementation was completed, AI tools were used only 
+to refactor existing code for readability, without changing the logic or
+functionality.
 
 ## 14) Project Structure
 
@@ -262,7 +270,6 @@ External APIs are not reliable for automated tests due to keys, network availabi
 - `src/travelproject/api/` - integrations (hotels, flights, distance, AI plan)
 - `test/` - Midje tests
 
----
 
 ## Author
 
